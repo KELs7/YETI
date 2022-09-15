@@ -5,18 +5,21 @@ metadata = Hash()
 
 @construct
 def init():
-    balances["sys"] = 288_090_567
-    metadata["owners"] = ["Adam", "Niel"]
+    # Token info
+    balances["sys"] = 100_000_000_000       # WHO/WHAT WALLET HAS ALL THE SUPPLY?
+    metadata["token_name"] = 'YETI'
+    metadata["token_symbol"] = 'YETI'
+    metadata["owners"] = ["Adam", "Niel"]       # PLACE REAL ADDRESSES HERE
     # Swap info
     metadata["swap_token"] =  "con_marmite100_contract"
-    metadata["swap_end"] = now + datetime.timedelta(days=180)
+    metadata["swap_end"] = now + datetime.timedelta(days=180)       # HOW MANY DAYS TO AGREE ON?
     metadata["swap_rate"] = decimal('1')
     # Wallets
-    metadata["rewards_wallet"] = "rewards_wallet"
-    metadata["LP_wallet"] = "LP_wallet"
-    metadata["charity_wallet"] = "charity_wallet"
-    metadata["buy_back_wallet"] = "buy_back_wallet"
-    metadata["burn_wallet"] = "burn_wallet"
+    metadata["rewards_wallet"] = "rewards_wallet"   # PLACE REAL ADDRESS HERE
+    metadata["LP_wallet"] = "LP_wallet"     # PLACE REAL ADDRESS HERE
+    metadata["charity_wallet"] = "charity_wallet"       # PLACE REAL ADDRESS HERE
+    metadata["buy_back_wallet"] = "buy_back_wallet"     # PLACE REAL ADDRESS HERE
+    metadata["burn_wallet"] = "burn_wallet"     # PLACE REAL ADDRESS HERE
     metadata["blocked_wallets"] = ["1b6a98bc717d568379218ca87b2b8f67b561ee1e50049da1af8f104270816a6b"]
     # Rates
     metadata["buy_tax"] = decimal('0.05')
@@ -26,7 +29,7 @@ def init():
     metadata["charity_perc"] = decimal('0.01')
     metadata["buy_back_perc"] = decimal('0.01')
     metadata["burn_perc"] = decimal('0.01')
-
+    # DEX
     metadata["dex"] = ["con_rocketswap_official_v1_1"]
 
 
@@ -42,10 +45,19 @@ def change_metadata(key: str, value: Any):
     agreed = False
     for owner in owners:
         if metadata[owner, key] is None:
+            # Without this initial value, we cannot later compare the proposed value "v"
             metadata[owner, key] = {"v":"", "time":""}
+
+        # Ensure caller's proposed value is not compared to itself   
         if owner != caller and metadata[owner, key]["v"] == metadata[caller, key]["v"] :
             metadata[key] = value
             agreed = True
+
+    if agreed:
+        for owner in owners:
+            # Prevent proposed value been used again by some owner in the future
+            metadata[caller, key] = hashlib.sha256(str(now))
+        return f"{key} = {value}"
 
     return agreed
 
@@ -119,21 +131,21 @@ def swap_marmite(amount: float):
     caller = ctx.caller
     assert amount > 0, "Cannot send negative balances!"
     assert caller not in metadata["blocked_wallets"], "caller is a blocked wallet!"
-    assert now < metadata["swap_end"], "Swap is over"
+    assert now < metadata["swap_end"], "Swap is over!"
 
     token_contract = metadata["swap_token"]
     swap_token = I.import_module(token_contract)
 
     swap_token.transfer_from(amount=amount, to=metadata["burn_wallet"], main_account=caller)
-    amount_of_yeti_to_mint = amount * metadata["swap_rate"] 
-    balances[caller] += amount_of_yeti_to_mint
-    balances["sys"] -= amount_of_yeti_to_mint
+    amount_of_yeti = amount * metadata["swap_rate"] 
+    balances[caller] += amount_of_yeti
+    balances["sys"] -= amount_of_yeti
 
 @export
-def execute_proposal(key: str):
+def execute_proposal_after_a_month(key: str):
     assert_owner()
     caller = ctx.caller
-    assert isinstance(metadata[caller, key], dict), "Proposal does not exist!"
+    assert metadata[caller, key], "Proposal does not exist!"
     assert now > metadata[caller, key]["time"] + datetime.timedelta(weeks=4) , "Proposal must be 1 month old!"
     metadata[key] = metadata[caller, key]["v"]
     return True
