@@ -128,7 +128,7 @@ class MyTestCase(unittest.TestCase):
         
         self.assertEqual(self.yeti.metadata["burn_wallet"], burn_wallet_after_governance)
         self.assertFalse(agreement_state_1)
-        self.assertTrue(agreement_state_2)
+        self.assertEqual("burn_wallet = xxxburnxxx", agreement_state_2)
     
     def test_07_a_proposal_without_a_second_confirmation_should_fail(self):
         burn_wallet_before_governance = "burn_wallet"
@@ -149,7 +149,7 @@ class MyTestCase(unittest.TestCase):
         env_1 = {"now": Datetime(year=2023, month=1, day=16)}
 
         self.yeti.change_metadata(environment=env_0, signer="Adam", key="burn_wallet", value="xxxburnxxx")
-        self.yeti.execute_proposal(environment=env_1, signer="Adam", key="burn_wallet")
+        self.yeti.execute_proposal_after_a_month(environment=env_1, signer="Adam", key="burn_wallet")
 
         burn_wallet_after_governance = "xxxburnxxx"
         
