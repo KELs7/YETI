@@ -72,7 +72,10 @@ def add_liquidity(contract: str, currency_amount: float=0):
 
     # Determine the number of tokens required
     token_amount = currency_amount / prices[contract]
-
+    
+    #DEBUG
+    #assert 5 < 1,f"price:{prices[contract]}"
+    
     # Transfer both tokens
     currency.transfer_from(amount=currency_amount, to=ctx.this, main_account=ctx.caller)
     token.transfer_from(amount=token_amount, to=ctx.this, main_account=ctx.caller)
