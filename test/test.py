@@ -49,7 +49,6 @@ class MyTestCase(unittest.TestCase):
         self.currency.approve(signer="ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b", amount=999999999, to="con_rocketswap_official_v1_1")
         self.currency.approve(signer="con_yeti_rewards", amount=999999999, to="con_rocketswap_official_v1_1")
         self.currency.approve(signer="kels", amount=999999999, to="con_rocketswap_official_v1_1")
-        #self.currency.approve(signer="con_yeti_liq", amount=999999999, to="con_rocketswap_official_v1_1")
         
         self.rswp.approve(signer="sys", amount=999999999, to="con_rocketswap_official_v1_1")
         self.rswp.approve(signer="ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b", amount=999999999, to="con_rocketswap_official_v1_1")
@@ -58,7 +57,6 @@ class MyTestCase(unittest.TestCase):
         self.yeti.approve(signer="ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b", amount=999999999, to="con_rocketswap_official_v1_1")
         self.yeti.approve(signer="con_yeti_rewards", amount=999999999, to="con_rocketswap_official_v1_1")
         self.yeti.approve(signer="kels", amount=999999999, to="con_rocketswap_official_v1_1")
-        #self.yeti.approve(signer="con_yeti_liq", amount=999999999999, to="con_rocketswap_official_v1_1")   
         
         self.marmite.approve(signer="Niel", amount=999999999, to="con_yeti_contract")
         self.marmite.approve(signer=blacklisted_wallets, amount=999999999, to="con_yeti_contract")
@@ -66,10 +64,9 @@ class MyTestCase(unittest.TestCase):
 
         # TAU, YETi, and MARMITE transfers to ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b
         self.currency.transfer(signer="sys", amount=6000000, to="ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b")
+        self.currency.transfer(signer="sys", amount=60000, to="kels")
         self.marmite.transfer(signer="sys", amount=1000000, to="Niel")
         self.marmite.transfer(signer="sys", amount=1000000, to=blacklisted_wallets)
-
-        self.currency.transfer(signer="sys", amount=60000, to="kels")
         self.yeti.transfer(signer="ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b", amount=60000, to="kels")
 
         # Create TAU-RSWP pool
@@ -86,8 +83,7 @@ class MyTestCase(unittest.TestCase):
         self.c.flush()
     
     def test_01_transfering_to_user_attracts_no_tax(self):
-        self.yeti.transfer(signer="ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b",\
-            amount=300, to="Niel")
+        self.yeti.transfer(signer="kels", amount=300, to="Niel")
         balance_of_niel = 300
 
         self.assertEqual(self.yeti.balances["Niel"], balance_of_niel)
@@ -175,8 +171,9 @@ class MyTestCase(unittest.TestCase):
 
         swap_rate = ContractingDecimal('1')
 
-        # supply_after_swap = self.yeti.balances["ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d6 \
-        #     1f5b2b"] - 400
+        supply_yeti = self.yeti.balances["ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b"]
+
+        supply_after_swap_yeti =  supply_yeti - 400
 
         self.yeti.swap_token(environment=env_0, signer="Niel", amount=400)
 
@@ -184,8 +181,7 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(self.marmite.balances["yeti_burn_wallet"], balance_of_niel_yeti)
         self.assertEqual(self.yeti.balances["Niel"], balance_of_niel_yeti)
-        # self.assertEqual(self.yeti.balances["ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2 \
-        #     b"], supply_after_swap)
+        self.assertEqual(self.yeti.balances["ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b"], supply_after_swap_yeti)
 
     def test_07_swapping_marmite_amount_bigger_than_supply_should_fail(self):
         env_0 = {"now": Datetime(year=2022, month=12, day=16)}
