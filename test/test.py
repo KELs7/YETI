@@ -288,7 +288,7 @@ class MyTestCase(unittest.TestCase):
         self.assertFalse(agreement_state_3)
         self.assertEqual('reward_token = con_lusd_lst001', agreement_state_4)
     
-    def test_11_a_proposal_without_confirmation_should_fail(self):
+    def test_11_a_proposal_without_approving_should_fail(self):
         WALLET_CHIEF = 'ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
         WALLET_NIEL = '1910513066afbe592d6140c0055de3cb068fe7c17584a654a704ac7e60b2df04'
         reward_token_before_governance = 'con_lusd_lst001'
@@ -300,7 +300,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(reward_token_before_governance, reward_token_after_governance)
         self.assertFalse(agreement_state)
 
-    def test_12_executing_proposal_after_1_month_when_there_is_no_confirmatio_should_pass(self):
+    def test_12_executing_proposal_after_1_month_without_approval_should_pass(self):
         WALLET_CHIEF = 'ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
         WALLET_NIEL = '1910513066afbe592d6140c0055de3cb068fe7c17584a654a704ac7e60b2df04'
         env_0 = {'now': Datetime(year=2022, month=12, day=16)}
@@ -317,7 +317,7 @@ class MyTestCase(unittest.TestCase):
         
         self.assertEqual(self.yeti.metadata['reward_token'], reward_token_after_governance)
 
-    def test_13_executing_proposal_before_1_month_when_there_is_no_confirmation_should_fail(self):
+    def test_13_executing_proposal_before_1_month_without_approval_should_fail(self):
         WALLET_CHIEF = 'ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
         env_0 = {'now': Datetime(year=2022, month=12, day=16)}
         reward_token_before_governance = 'con_lusd_lst001'
