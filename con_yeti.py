@@ -18,7 +18,8 @@ WALLET_YETI_BUYBACK = 'b22e0df3949428211989867c4e4febd851af3c1c044a8d892e8a07b70
 @construct
 def init():
     # Token info
-    balances[WALLET_CHIEF] = 100_000_000_000 
+    balances[WALLET_CHIEF] = 95_000_000_000 
+    balances[WALLET_NIEL] = 5_000_000_000
     metadata['token_name'] = 'YETI TOKEN'
     metadata['token_symbol'] = 'YETI'
     metadata['owners'] = [WALLET_CHIEF, WALLET_NIEL]
@@ -183,13 +184,13 @@ def pay_tax(tax_amount, spender, main_account):
     balances[metadata['burn_wallet']] += tax_amount * metadata['burn%']
     
 @export 
-def distribute_rewards(addresses: list, holder_min: float, \
+def distribute_rewards(addresses: list, holder_min: float,
     distribute_min: float, fee_cover_perc: float):
     assert_owner()
     rewards_contract = I.import_module(metadata['rewards_contract'])
     rewards_contract.distribute_rewards(contract=metadata['reward_token'],
-        addresses=addresses, holder_min=holder_min, distribute_min=distribute_min, \
-        fee_cover_perc=fee_cover_perc)
+        addresses=addresses, holder_min=holder_min, 
+        distribute_min=distribute_min, fee_cover_perc=fee_cover_perc)
 
 @export 
 def swap_token(amount: float):
