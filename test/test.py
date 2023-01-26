@@ -49,7 +49,6 @@ class MyTestCase(unittest.TestCase):
         blacklisted_wallets = self.yeti.metadata['blacklisted_wallets'][0]
         self.currency.approve(signer='sys', amount=999999999, to='con_rocketswap_official_v1_1')
         self.currency.approve(signer=WALLET_CHIEF, amount=999999999, to='con_rocketswap_official_v1_1')
-        self.currency.approve(signer='con_yeti_rewards', amount=999999999, to='con_rocketswap_official_v1_1')
         self.currency.approve(signer='kels', amount=999999999, to='con_rocketswap_official_v1_1')
         
         self.rswp.approve(signer='sys', amount=999999999, to='con_rocketswap_official_v1_1')
@@ -57,7 +56,6 @@ class MyTestCase(unittest.TestCase):
         
         self.yeti.approve(signer='sys', amount=999999999, to='con_rocketswap_official_v1_1')
         self.yeti.approve(signer=WALLET_CHIEF, amount=999999999, to='con_rocketswap_official_v1_1')
-        self.yeti.approve(signer='con_yeti_rewards', amount=999999999, to='con_rocketswap_official_v1_1')
         self.yeti.approve(signer='kels', amount=999999999, to='con_rocketswap_official_v1_1')
         
         self.marmite.approve(signer=WALLET_NIEL, amount=999999999, to='con_yeti_contract')
@@ -88,10 +86,10 @@ class MyTestCase(unittest.TestCase):
     
     def test_01_transfering_to_user_attracts_no_tax(self):
         WALLET_NIEL = '1910513066afbe592d6140c0055de3cb068fe7c17584a654a704ac7e60b2df04'
-        self.yeti.transfer(signer='kels', amount=300, to=WALLET_NIEL)
-        balance_of_niel = 300
+        self.yeti.transfer(signer='kels', amount=300, to='benji')
+        balance_of_benji = 300
 
-        self.assertEqual(self.yeti.balances[WALLET_NIEL], balance_of_niel)
+        self.assertEqual(self.yeti.balances['benji'], balance_of_benji)
     
     def test_02_buying_yeti_attracts_tax(self):
         WALLET_YETI_LP = 'a690e68d8a049ea7c8ad4e16b166e321bd5ebc0dba4dc10d2ea01bf6eed84cca'
@@ -237,13 +235,22 @@ class MyTestCase(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.yeti.swap_token(environment=env_0, signer='kels', amount=100_000_000_000)
 
-    def test_08_blacklisted_wallet_swapping_marmite_should_fail(self):
+    def test_08_blacklisted_wallets_swapping_marmite_should_fail(self):
+        WALLET_CHIEF = 'ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
+        WALLET_NIEL = '1910513066afbe592d6140c0055de3cb068fe7c17584a654a704ac7e60b2df04'
+        
         env_0 = {'now': Datetime(year=2022, month=12, day=16)}
 
         blacklisted_wallet = self.yeti.metadata['blacklisted_wallets'][0]
 
         with self.assertRaises(AssertionError):
             self.yeti.swap_token(environment=env_0, signer=blacklisted_wallet, amount=400)
+
+        with self.assertRaises(AssertionError):
+            self.yeti.swap_token(environment=env_0, signer=WALLET_CHIEF, amount=400)
+
+        with self.assertRaises(AssertionError):
+            self.yeti.swap_token(environment=env_0, signer=WALLET_NIEL, amount=400)
 
     def test_09_contract_swapping_marmite_should_fail(self):
         env_0 = {'now': Datetime(year=2022, month=12, day=16)}
@@ -259,8 +266,7 @@ class MyTestCase(unittest.TestCase):
 
         self.assertEqual(self.yeti.metadata['reward_token'], reward_token_before_governance)
 
-        agreement_state_1 = self.yeti.change_metadata(signer=WALLET_CHIEF, key='reward_token', value='con_weth_lst001')
-            
+        agreement_state_1 = self.yeti.change_metadata(signer=WALLET_CHIEF, key='reward_token', value='con_weth_lst001')   
         agreement_state_2 = self.yeti.change_metadata(signer=WALLET_NIEL, key='reward_token', value='con_weth_lst001')
 
         reward_token_after_governance = 'con_weth_lst001'
@@ -268,6 +274,19 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(self.yeti.metadata['reward_token'], reward_token_after_governance)
         self.assertFalse(agreement_state_1)
         self.assertEqual('reward_token = con_weth_lst001', agreement_state_2)
+
+        # second act of governance
+
+        reward_token_before_2nd_governance = reward_token_after_governance
+
+        agreement_state_3 = self.yeti.change_metadata(signer=WALLET_NIEL, key='reward_token', value='con_lusd_lst001')   
+        agreement_state_4 = self.yeti.change_metadata(signer=WALLET_CHIEF, key='reward_token', value='con_lusd_lst001')
+
+        reward_token_after_2nd_governance = 'con_lusd_lst001'
+        
+        self.assertEqual(self.yeti.metadata['reward_token'], reward_token_after_2nd_governance)
+        self.assertFalse(agreement_state_3)
+        self.assertEqual('reward_token = con_lusd_lst001', agreement_state_4)
     
     def test_11_a_proposal_without_confirmation_should_fail(self):
         WALLET_CHIEF = 'ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
