@@ -1,5 +1,7 @@
 I = importlib
 
+import currency as tau
+import con_yeti_contract as yeti_token
 import con_rocketswap_official_v1_1
 
 YETI = 'con_yeti_contract'
@@ -14,7 +16,14 @@ operator = Variable()
 @construct
 def init():
     operator.set(YETI)
-    #TODO: make this contract approve DEX to spend
+    approve()
+
+
+@export
+def approve():
+    tau.approve(amount=9999999999999999999999, to='con_rocketswap_official_v1_1')
+    yeti_token.approve(amount=9999999999999999999999, to='con_rocketswap_official_v1_1')
+
 
 def buy_reward_token(contract: str, fee_cover_perc: float):
     #if nothing is passed to fee_cover_perc we assume a default value
@@ -30,23 +39,21 @@ def buy_reward_token(contract: str, fee_cover_perc: float):
     currency_amount = rewards_currency_amount - fee_cover
     #buy reward token with TAU from YETI sell
     DEX.buy(contract=contract, currency_amount=currency_amount)
-    #return DEX.buy(contract=contract, currency_amount=currency_amount)
     
 @export
-def distribute_rewards(contract: str, 
-    addresses: list, holder_min: float, distribute_min: float, fee_cover_perc: float):
+def distribute_rewards(contract: str, addresses: list, 
+    holder_min: float, distribute_min: float, fee_cover_perc: float):
     #check if caller is operator
     assert_operator()
     #if nothing is passed to holder_min and distribute_min, we assume certain default values
-    if holder_min == None: holder_min = 500_000_000
+    if holder_min == None: holder_min = 50_000_000
     if distribute_min == None: distribute_min = 1000
     #buy reward token for distribution
     buy_reward_token(contract=contract, fee_cover_perc=fee_cover_perc)
-    #assert 5 < 1, f'{buy_reward_token(contract=contract, fee_cover_perc=fee_cover_perc)}'
     #get total reward token balance of this contract
     rewards_token_balance = ForeignHash(foreign_contract=contract, foreign_name='balances')
     rewards_token_amount = rewards_token_balance[REWARDS_CONTRACT]
-    #check minimum reward token amount required for distribute 
+    #check minimum reward token amount required for distribution 
     assert rewards_token_amount >= distribute_min, \
         f'Not enough funds to distribute! Current amount is {rewards_token_amount}'
     
