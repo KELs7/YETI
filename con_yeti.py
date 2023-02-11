@@ -6,46 +6,43 @@ metadata = Hash()
 
 TOKEN_CONTRACT = 'con_yeti_contract'
 
-WALLET_CHIEF = 'ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
-WALLET_NIEL = '1910513066afbe592d6140c0055de3cb068fe7c17584a654a704ac7e60b2df04'
-WALLET_YETI_LP = 'a690e68d8a049ea7c8ad4e16b166e321bd5ebc0dba4dc10d2ea01bf6eed84cca'
-WALLET_YETI_RAIN = 'e8dc708028e049397b5baf9579924dde58ce5bebee5655da0b53066117572e73'
-WALLET_YETI_MARKETING = '3466e7576d1b70aef675ee4149b0d83cf21f69f4cfade801249d5afaad7c7ac9'
-WALLET_YETI_CHARITY = '4c66b7ba687222d44df2c3c989ae4cc50185abfcee8ea5356afcc5344c4a5f94'
-WALLET_YETI_BUYBACK = 'b22e0df3949428211989867c4e4febd851af3c1c044a8d892e8a07b7034e94dc'
-
+W_CHIEF='ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
+W_NIEL='1910513066afbe592d6140c0055de3cb068fe7c17584a654a704ac7e60b2df04'
+W_LP='a690e68d8a049ea7c8ad4e16b166e321bd5ebc0dba4dc10d2ea01bf6eed84cca'
+W_RAIN='e8dc708028e049397b5baf9579924dde58ce5bebee5655da0b53066117572e73'
+W_MARKETN='3466e7576d1b70aef675ee4149b0d83cf21f69f4cfade801249d5afaad7c7ac9'
+W_CHARITY='4c66b7ba687222d44df2c3c989ae4cc50185abfcee8ea5356afcc5344c4a5f94'
+W_BUYBACK='b22e0df3949428211989867c4e4febd851af3c1c044a8d892e8a07b7034e94dc'
 
 @construct
 def init():
     # Token info
-    balances[WALLET_CHIEF] = 95_000_000_000 
-    balances[WALLET_NIEL] = 5_000_000_000
+    balances[W_CHIEF] = 95_000_000_000 
+    balances[W_NIEL] = 5_000_000_000
     metadata['token_name'] = 'YETI TOKEN'
     metadata['token_symbol'] = 'YETI'
-    metadata['owners'] = [WALLET_CHIEF, WALLET_NIEL]
+    metadata['owners'] = [W_CHIEF, W_NIEL]
     # Swap info
     metadata['swap_token'] =  'con_marmite100_contract'
     metadata['swap_end'] = now + datetime.timedelta(days=180)       # HOW MANY DAYS TO AGREE ON? 6 MONTHS?
     metadata['swap_rate'] = decimal('1')
     # Wallets
     metadata['rewards_contract'] = 'con_yeti_rewards'   
-    metadata['LP_wallet'] = WALLET_YETI_LP    
-    metadata['rain_wallet'] = WALLET_YETI_RAIN    
-    metadata['marketing_wallet'] = WALLET_YETI_MARKETING       
-    metadata['charity_wallet'] = WALLET_YETI_CHARITY
-    metadata['buyback_wallet'] = WALLET_YETI_BUYBACK
+    metadata['LP_wallet'] = W_LP    
+    metadata['rain_wallet'] = W_RAIN    
+    metadata['marketing_wallet'] = W_MARKETN      
+    metadata['charity_wallet'] = W_CHARITY
+    metadata['buyback_wallet'] = W_BUYBACK
     metadata['burn_wallet'] = 'yeti_burn_wallet'
-    # TODO: rule out contracts by checking for "con_"
     
     metadata['blacklisted_wallets'] = [
         '1b6a98bc717d568379218ca87b2b8f67b561ee1e50049da1af8f104270816a6b',
-        WALLET_CHIEF,
-        WALLET_NIEL,
-        WALLET_YETI_LP,
-        WALLET_YETI_RAIN,
-        WALLET_YETI_MARKETING,
-        WALLET_YETI_CHARITY,
-        WALLET_YETI_BUYBACK
+        W_CHIEF,
+        W_LP,
+        W_RAIN,
+        W_MARKETN,
+        W_CHARITY,
+        W_BUYBACK
     ]
 
     # Rates
@@ -184,13 +181,11 @@ def pay_tax(tax_amount, spender, main_account):
     balances[metadata['burn_wallet']] += tax_amount * metadata['burn%']
     
 @export 
-def distribute_rewards(addresses: list, holder_min: float,
-    distribute_min: float, fee_cover_perc: float):
+def distribute_rewards(addresses: list, holder_min: float, cost_of_distr: float, eligible_total_balance: float):
     assert_owner()
     rewards_contract = I.import_module(metadata['rewards_contract'])
-    rewards_contract.distribute_rewards(contract=metadata['reward_token'],
-        addresses=addresses, holder_min=holder_min, 
-        distribute_min=distribute_min, fee_cover_perc=fee_cover_perc)
+    rewards_contract.distribute_rewards(contract=metadata['reward_token'],addresses=addresses, 
+        holder_min=holder_min, cost_of_distr=cost_of_distr, eligible_total_balance=eligible_total_balance)
 
 @export 
 def swap_token(amount: float):
@@ -198,7 +193,7 @@ def swap_token(amount: float):
     assert amount > 0, 'Cannot send negative balances!'
     assert caller not in metadata['blacklisted_wallets'], 'this wallet is blacklisted'
     assert not caller.startswith('con_'), 'Caller is a contract!'
-    assert balances[WALLET_CHIEF] > amount, f'Token amount left is {balances[WALLET_CHIEF]} \
+    assert balances[W_CHIEF] > amount, f'Token amount left is {balances[W_CHIEF]} \
         and you are trying to swap for {amount}'
     assert now < metadata['swap_end'], 'Swap is over!'
 
@@ -208,7 +203,7 @@ def swap_token(amount: float):
     swap_token.transfer_from(amount=amount, to=metadata['burn_wallet'], main_account=caller)
     amount_of_yeti = amount * metadata['swap_rate'] 
     balances[caller] += amount_of_yeti
-    balances[WALLET_CHIEF] -= amount_of_yeti
+    balances[W_CHIEF] -= amount_of_yeti
 
 @export
 def execute_proposal_after_a_month(key: str):
