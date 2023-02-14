@@ -37,6 +37,18 @@ class MyTestCase(unittest.TestCase):
 
         self.dex = self.c.get_contract('con_rocketswap_official_v1_1')
 
+        with open('../con_transfer_from_1.py') as f:
+            code = f.read()
+            self.c.submit(code, name='con_yeti_transfer_from_1')
+
+        self.yeti_transfer_from_1 = self.c.get_contract('con_yeti_transfer_from_1')
+
+        with open('../con_transfer_from_2.py') as f:
+            code = f.read()
+            self.c.submit(code, name='con_yeti_transfer_from_2')
+
+        # self.yeti_transfer_from_2 = self.c.get_contract('con_yeti_transfer_from_2')
+
         with open('../con_yeti_rewards.py') as f:
             code = f.read()
             self.c.submit(code, name='con_yeti_rewards')
@@ -162,8 +174,6 @@ class MyTestCase(unittest.TestCase):
         self.assertIsNone(self.currency.balances['chief']) #does not get rewarded
         self.assertAlmostEqual(self.currency.balances['niel'], tau_to_distr*(400/1400))
         self.assertAlmostEqual(self.currency.balances['dev'], tau_to_distr*(800/1400))
-        
-        # TODO: contract part of address list
 
     def test_06_contracts_are_excluded_from_reward_distribution(self):
         self.yeti.metadata['reward_token'] = 'currency'
@@ -188,7 +198,58 @@ class MyTestCase(unittest.TestCase):
         self.assertAlmostEqual(self.currency.balances['con_yeti_rewards'], tau_left_for_distr_fee+undistr_amount)
         self.assertIsNone(self.currency.balances['con_am_contract']) #does not get rewarded
         self.assertAlmostEqual(self.currency.balances['niel'], tau_to_distr*(400/1400))
-        self.assertAlmostEqual(self.currency.balances['dev'], tau_to_distr*(800/1400))          
+        self.assertAlmostEqual(self.currency.balances['dev'], tau_to_distr*(800/1400)) 
+
+    # USING DEDUCTING TAX FROM AMOUNT SOLD
+    def test_07_distributing_reward_token_other_than_tau_works_2(self):
+        self.yeti.metadata['transfer_from_contract'] = 'con_yeti_transfer_from_2'
+
+        cost_of_distr = 90
+        # yeti transfers
+        self.yeti.transfer(signer=W_CHIEF, amount=10, to='con_yeti_rewards')  
+        self.yeti.transfer(signer=W_CHIEF, amount=200, to='chief') 
+        self.yeti.transfer(signer=W_CHIEF, amount=400, to='niel') 
+        self.yeti.transfer(signer=W_CHIEF, amount=800, to='dev') 
+        
+        address_list = ['chief', 'niel','dev']
+        
+        self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
+            holder_min=200, cost_of_distr=cost_of_distr, eligible_total_balance=1400)
+
+        tau_bought = 99.69501524918922288
+        tau_to_buy_lusd = tau_bought - cost_of_distr
+        lusd_bought = 0.966588334799842734689347949841
+        tau_left_for_distr_fee = tau_bought - tau_to_buy_lusd
+        
+        self.assertAlmostEqual(self.currency.balances['con_yeti_rewards'], tau_left_for_distr_fee)
+        self.assertAlmostEqual(self.lusd.balances['chief'], lusd_bought*(200/1400))
+        self.assertAlmostEqual(self.lusd.balances['niel'], lusd_bought*(400/1400))
+        self.assertAlmostEqual(self.lusd.balances['dev'], lusd_bought*(800/1400))
+
+    def test_08_distributing_tau_as_rewards_works_2(self):
+        self.yeti.metadata['transfer_from_contract'] = 'con_yeti_transfer_from_2'
+
+        self.yeti.metadata['reward_token'] = 'currency'
+        cost_of_distr = 90
+        # yeti transfers
+        self.yeti.transfer(signer=W_CHIEF, amount=10, to='con_yeti_rewards')  
+        self.yeti.transfer(signer=W_CHIEF, amount=200, to='chief') 
+        self.yeti.transfer(signer=W_CHIEF, amount=400, to='niel') 
+        self.yeti.transfer(signer=W_CHIEF, amount=800, to='dev') 
+        
+        address_list = ['chief', 'niel','dev']
+        
+        self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
+            holder_min=200, cost_of_distr=cost_of_distr, eligible_total_balance=1400)
+
+        tau_bought = 99.69501524918922288
+        tau_to_distr = tau_bought - cost_of_distr
+        tau_left_for_distr_fee = tau_bought - tau_to_distr
+        
+        self.assertAlmostEqual(self.currency.balances['con_yeti_rewards'], tau_left_for_distr_fee)
+        self.assertAlmostEqual(self.currency.balances['chief'], tau_to_distr*(200/1400))
+        self.assertAlmostEqual(self.currency.balances['niel'], tau_to_distr*(400/1400))
+        self.assertAlmostEqual(self.currency.balances['dev'], tau_to_distr*(800/1400))
 
 if __name__ == "__main__":
     unittest.main()
