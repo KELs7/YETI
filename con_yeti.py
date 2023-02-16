@@ -1,6 +1,5 @@
 I = importlib
 
-rswp_reserves = ForeignHash(foreign_contract='con_rocketswap_official_v1_1', foreign_name='reserves')
 balances = Hash(default_value=0)
 metadata = Hash()
 
@@ -27,7 +26,7 @@ def init():
     metadata['swap_end'] = now + datetime.timedelta(days=180)       # HOW MANY DAYS TO AGREE ON? 6 MONTHS?
     metadata['swap_rate'] = decimal('1')
     # Wallets
-    metadata['rewards_contract'] = 'con_yeti_rewards'   
+    metadata['rewards_contract'] = 'con_distr_rewards_yeti'   
     metadata['LP_wallet'] = W_LP    
     metadata['rain_wallet'] = W_RAIN    
     metadata['marketing_wallet'] = W_MARKETN      
@@ -109,18 +108,14 @@ def mint(amount: float, to: str):
 def transfer(amount: float, to: str):
     assert amount > 0, 'Cannot send negative balances!'
 
-    # TODO: removing liquidity should not be taxed
-
     signer = ctx.signer
     caller = ctx.caller
     contract_name, contract_method = ctx.entry
     
-
     assert balances[caller] >= amount, 'Not enough YETI to send!'
 
     if contract_name in metadata['dex']:
         tax_amount = amount * metadata['buy_tax']
-        # amount_to_buyer = amount - tax_amount
 
         transfer = I.import_module(metadata['transfer_contract'])
         amount_2 = transfer.transfer(ctx_signer=signer, contract=contract_name, contract_method=contract_method, 
@@ -142,29 +137,6 @@ def transfer(amount: float, to: str):
         balances[caller] -= amount
         balances[to] += amount
 
-
-
-
-    # if signer not in metadata['owners'] and caller in metadata['dex']:
-    #     tax_amount = amount * metadata['buy_tax']
-    #     amount_to_buyer = amount - tax_amount
-
-    #     balances[caller] -= amount
-    #     balances[to] += amount_to_buyer
-    #     # Transfers to YETI fund wallets
-    #     balances[metadata['marketing_wallet']] += tax_amount * metadata['marketing%']
-    #     balances[metadata['LP_wallet']] += tax_amount * metadata['LP%']
-    #     balances[metadata['rewards_contract']] += tax_amount * metadata['rewards%']
-    #     balances[metadata['rain_wallet']] += tax_amount * metadata['rain%']
-    #     balances[metadata['charity_wallet']] += tax_amount * metadata['charity%']
-    #     balances[metadata['buyback_wallet']] += tax_amount * metadata['buyback%']
-    #     balances[metadata['burn_wallet']] += tax_amount * metadata['burn%']
-
-    #     return
-        
-    # balances[caller] -= amount
-    # balances[to] += amount
-
 @export
 def approve(amount: float, to: str):
     assert amount > 0, 'Cannot send negative balances!'
@@ -181,21 +153,30 @@ def transfer_from(amount: float, to: str, main_account: str):
     contract_name, contract_method = ctx.entry
 
     if contract_name in metadata['dex']:
-
         tax_amount = amount * metadata['sell_tax']
 
         transfer_from = I.import_module(metadata['transfer_from_contract'])
-
         amount_2 = transfer_from.transfer_from(caller=caller, contract=contract_name, contract_method=contract_method, 
             amount=amount, to=caller, main_account=main_account, tax_amount=tax_amount)
         
-        balances[main_account, caller] -= amount_2
+        balances[main_account, caller] -= amount
 
-        balances[main_account] -= amount_2
+        balances[main_account] -= amount
         balances[to] += amount_2
 
         if contract_method == metadata['sell_function']:
-            pay_tax(tax_amount, caller, main_account)
+            if amount == amount_2:
+                balances[main_account, caller] -= tax_amount
+                balances[main_account] -= tax_amount
+            # Transfers to YETI fund wallets
+            balances[metadata['marketing_wallet']] += tax_amount * metadata['marketing%']
+            balances[metadata['LP_wallet']] += tax_amount * metadata['LP%']
+            balances[metadata['rewards_contract']] += tax_amount * metadata['rewards%']
+            balances[metadata['rain_wallet']] += tax_amount * metadata['rain%']
+            balances[metadata['charity_wallet']] += tax_amount * metadata['charity%']
+            balances[metadata['buyback_wallet']] += tax_amount * metadata['buyback%']
+            balances[metadata['burn_wallet']] += tax_amount * metadata['burn%'] 
+            # pay_tax(tax_amount, caller, main_account)
 
     else:
         assert balances[main_account, caller] >= amount, f'Not enough coins approved to send! You have {balances[main_account, caller]} \
@@ -207,17 +188,17 @@ def transfer_from(amount: float, to: str, main_account: str):
         balances[main_account] -= amount
         balances[to] += amount
 
-def pay_tax(tax_amount, caller, main_account):
-    balances[main_account, caller] -= tax_amount
-    balances[main_account] -= tax_amount
-    # Transfers to YETI fund wallets
-    balances[metadata['marketing_wallet']] += tax_amount * metadata['marketing%']
-    balances[metadata['LP_wallet']] += tax_amount * metadata['LP%']
-    balances[metadata['rewards_contract']] += tax_amount * metadata['rewards%']
-    balances[metadata['rain_wallet']] += tax_amount * metadata['rain%']
-    balances[metadata['charity_wallet']] += tax_amount * metadata['charity%']
-    balances[metadata['buyback_wallet']] += tax_amount * metadata['buyback%']
-    balances[metadata['burn_wallet']] += tax_amount * metadata['burn%']    
+# def pay_tax(tax_amount, caller, main_account):
+#     balances[main_account, caller] -= tax_amount
+#     balances[main_account] -= tax_amount
+#     # Transfers to YETI fund wallets
+#     balances[metadata['marketing_wallet']] += tax_amount * metadata['marketing%']
+#     balances[metadata['LP_wallet']] += tax_amount * metadata['LP%']
+#     balances[metadata['rewards_contract']] += tax_amount * metadata['rewards%']
+#     balances[metadata['rain_wallet']] += tax_amount * metadata['rain%']
+#     balances[metadata['charity_wallet']] += tax_amount * metadata['charity%']
+#     balances[metadata['buyback_wallet']] += tax_amount * metadata['buyback%']
+#     balances[metadata['burn_wallet']] += tax_amount * metadata['burn%']    
     
 @export 
 def distribute_rewards(addresses: list, holder_min: float, cost_of_distr: float, eligible_total_balance: float):
