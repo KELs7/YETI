@@ -113,9 +113,8 @@ class MyTestCase(unittest.TestCase):
     
     def test_01_transfering_to_user_attracts_no_tax(self):
         self.yeti.transfer(signer='kels', amount=300, to='benji')
-        balance_of_benji = 300
-
-        self.assertEqual(self.yeti.balances['benji'], balance_of_benji)
+       
+        self.assertEqual(self.yeti.balances['benji'], 300)
 
     def test_02_other_contracts_should_fail_calling_transfer_contract(self):
         owners = [W_CHIEF, W_NIEL]
@@ -125,11 +124,19 @@ class MyTestCase(unittest.TestCase):
                 contract_method='buy', amount=1000, owners=owners, tax_amount=10)
 
     def test_03_user_removing_liq_is_not_taxed(self):
-        self.dex.add_liquidity(signer='kels', contract='con_yeti_contract', currency_amount=100_000)
-        self.dex.remove_liquidity(signer='kels', contract='con_yeti_contract', amount=2)
+        balance_kels_yeti_1 = self.yeti.balances['kels']
 
+        self.dex.add_liquidity(signer='kels', contract='con_yeti_contract', currency_amount=100_000)
+
+        balance_kels_yeti_2 = self.yeti.balances['kels']
+        amount_yeti_added_to_liq = balance_kels_yeti_1 - balance_kels_yeti_2
+        
+        self.dex.remove_liquidity(signer='kels', contract='con_yeti_contract', amount=5)
+        amount_yeti_liq_removed = self.yeti.balances['kels'] - balance_kels_yeti_2
+        
+        self.assertAlmostEqual(amount_yeti_added_to_liq, amount_yeti_liq_removed)
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
         self.assertIsNone(self.yeti.balances[W_CHARITY])
@@ -138,10 +145,19 @@ class MyTestCase(unittest.TestCase):
         
 
     def test_04_owner_removing_liq_is_not_taxed(self):
-        self.dex.remove_liquidity(signer= W_CHIEF,contract='con_yeti_contract', amount=50)
+        balance_chief_yeti_1 = self.yeti.balances[W_CHIEF]
 
+        self.dex.add_liquidity(signer=W_CHIEF, contract='con_yeti_contract', currency_amount=100_000)
+
+        balance_chief_yeti_2 = self.yeti.balances[W_CHIEF]
+        amount_yeti_added_to_liq = balance_chief_yeti_1 - balance_chief_yeti_2
+        
+        self.dex.remove_liquidity(signer=W_CHIEF, contract='con_yeti_contract', amount=5)
+        amount_yeti_liq_removed = self.yeti.balances[W_CHIEF] - balance_chief_yeti_2
+
+        self.assertAlmostEqual(amount_yeti_added_to_liq, amount_yeti_liq_removed)
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
         self.assertIsNone(self.yeti.balances[W_CHARITY])
@@ -150,6 +166,7 @@ class MyTestCase(unittest.TestCase):
         
     
     def test_05_user_buying_yeti_attracts_tax(self):
+        balance_kels_yeti = self.yeti.balances['kels']
 
         token_amount_purchased = self.dex.buy(signer='kels', contract='con_yeti_contract', currency_amount=1000)
 
@@ -167,9 +184,12 @@ class MyTestCase(unittest.TestCase):
             amount_credited_to_rain_fund
 
         calculated_buy_tax = total_credited_to_yeti_fund / token_amount_purchased
+
+        balance_kels_yeti_current = balance_kels_yeti + token_amount_purchased - tax_amount
         
+        self.assertEqual(self.yeti.balances['kels'], balance_kels_yeti_current)
         self.assertEqual(self.yeti.balances[W_MARKETN], amount_credited_to_marketing_fund)
-        self.assertEqual(self.yeti.balances['con_yeti_rewards'], amount_credited_to_rewards_fund)
+        self.assertEqual(self.yeti.balances['con_distr_rewards_yeti'], amount_credited_to_rewards_fund)
         self.assertEqual(self.yeti.balances[W_LP], amount_credited_to_LP_fund)
         self.assertEqual(self.yeti.balances[W_RAIN], amount_credited_to_rain_fund)
         self.assertEqual(self.yeti.balances[W_CHARITY], amount_credited_to_charity_fund)
@@ -178,12 +198,20 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(buy_tax, calculated_buy_tax)
 
     def test_06_owner_buying_yeti_attracts_no_tax(self):
-        self.dex.buy(signer=W_CHIEF, contract='con_yeti_contract', currency_amount=1000)
+        balance_chief_yeti = self.yeti.balances[W_CHIEF]
+
+        token_amount_purchased = self.dex.buy(signer=W_CHIEF, contract='con_yeti_contract', currency_amount=1000)
+
+        balance_chief_yeti_current = balance_chief_yeti + token_amount_purchased 
         
+        self.assertEqual(self.yeti.balances[W_CHIEF], balance_chief_yeti_current)
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
+        self.assertIsNone(self.yeti.balances[W_CHARITY])
+        self.assertIsNone(self.yeti.balances[W_BUYBACK])
+        self.assertIsNone(self.yeti.balances['yeti_burn_wallet'])
 
     # USING PAYING TAX ON TOP OF SOLD AMOUNT
 
@@ -205,7 +233,7 @@ class MyTestCase(unittest.TestCase):
     def test_09_owner_created_yeti_market_was_not_taxed(self):
         # YETI market was created in setupToken()
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
         self.assertIsNone(self.yeti.balances[W_CHARITY])
@@ -213,10 +241,20 @@ class MyTestCase(unittest.TestCase):
         self.assertIsNone(self.yeti.balances['yeti_burn_wallet'])
 
     def test_10_owner_adding_liq_is_not_taxed(self):
+        balance_chief_yeti_1 = self.yeti.balances[W_CHIEF]
+        balance_dex_yeti_1 = self.yeti.balances['con_rocketswap_official_v1_1']
+
         self.dex.add_liquidity(signer=W_CHIEF, contract='con_yeti_contract', currency_amount=100)
 
+        balance_chief_yeti_2 = self.yeti.balances[W_CHIEF]
+        balance_dex_yeti_2 = self.yeti.balances['con_rocketswap_official_v1_1']
+
+        amount_yeti_added_to_liq = balance_chief_yeti_1 - balance_chief_yeti_2
+        amount_received_dex_yeti = balance_dex_yeti_2 - balance_dex_yeti_1
+
+        self.assertEqual(amount_yeti_added_to_liq, amount_received_dex_yeti)
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
         self.assertIsNone(self.yeti.balances[W_CHARITY])
@@ -224,10 +262,20 @@ class MyTestCase(unittest.TestCase):
         self.assertIsNone(self.yeti.balances['yeti_burn_wallet'])
 
     def test_11_user_adding_liq_is_not_taxed(self):
+        balance_kels_yeti_1 = self.yeti.balances['kels']
+        balance_dex_yeti_1 = self.yeti.balances['con_rocketswap_official_v1_1']
+
         self.dex.add_liquidity(signer='kels', contract='con_yeti_contract', currency_amount=100)
 
+        balance_kels_yeti_2 = self.yeti.balances['kels']
+        balance_dex_yeti_2 = self.yeti.balances['con_rocketswap_official_v1_1']
+
+        amount_yeti_added_to_liq = balance_kels_yeti_1 - balance_kels_yeti_2
+        amount_received_dex_yeti = balance_dex_yeti_2 - balance_dex_yeti_1
+
+        self.assertEqual(amount_yeti_added_to_liq, amount_received_dex_yeti)
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
         self.assertIsNone(self.yeti.balances[W_CHARITY])
@@ -239,6 +287,9 @@ class MyTestCase(unittest.TestCase):
             self.dex.sell(signer='kels', contract='con_yeti_contract', token_amount=600_000)
 
     def test_13_user_selling_yeti_attracts_tax(self):
+        balance_kels_yeti = self.yeti.balances['kels']
+        balance_dex_yeti = self.yeti.balances['con_rocketswap_official_v1_1']
+
         self.dex.sell(signer='kels', contract='con_yeti_contract', token_amount=1000, 
             minimum_received=0, token_fees=False)
         
@@ -256,9 +307,13 @@ class MyTestCase(unittest.TestCase):
         amount_credited_to_rain_fund
 
         calculated_sell_tax = total_credited_to_yeti_fund / 1000
-        
+
+        balance_kels_yeti_current = balance_kels_yeti - 1000 - tax_amount
+
+        self.assertEqual(self.yeti.balances['kels'], balance_kels_yeti_current)
+        self.assertEqual(self.yeti.balances['con_rocketswap_official_v1_1'], balance_dex_yeti+1000)
         self.assertEqual(self.yeti.balances[W_MARKETN], amount_credited_to_marketing_fund)
-        self.assertEqual(self.yeti.balances['con_yeti_rewards'], amount_credited_to_rewards_fund)
+        self.assertEqual(self.yeti.balances['con_distr_rewards_yeti'], amount_credited_to_rewards_fund)
         self.assertEqual(self.yeti.balances[W_LP], amount_credited_to_LP_fund)
         self.assertEqual(self.yeti.balances[W_RAIN], amount_credited_to_rain_fund)
         self.assertEqual(self.yeti.balances[W_CHARITY], amount_credited_to_charity_fund)
@@ -267,6 +322,9 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(sell_tax, calculated_sell_tax)
         
     def test_14_owner_selling_yeti_attracts_tax(self):
+        balance_chief_yeti = self.yeti.balances[W_CHIEF]
+        balance_dex_yeti = self.yeti.balances['con_rocketswap_official_v1_1']
+
         self.dex.sell(signer=W_CHIEF, contract='con_yeti_contract', 
             token_amount=1000, minimum_received=0, token_fees=False)
 
@@ -284,9 +342,13 @@ class MyTestCase(unittest.TestCase):
         amount_credited_to_rain_fund
 
         calculated_sell_tax = total_credited_to_yeti_fund / 1000
-        
+
+        balance_chief_yeti_current = balance_chief_yeti - 1000 - tax_amount
+
+        self.assertEqual(self.yeti.balances[W_CHIEF], balance_chief_yeti_current)
+        self.assertEqual(self.yeti.balances['con_rocketswap_official_v1_1'], balance_dex_yeti+1000)
         self.assertEqual(self.yeti.balances[W_MARKETN], amount_credited_to_marketing_fund)
-        self.assertEqual(self.yeti.balances['con_yeti_rewards'], amount_credited_to_rewards_fund)
+        self.assertEqual(self.yeti.balances['con_distr_rewards_yeti'], amount_credited_to_rewards_fund)
         self.assertEqual(self.yeti.balances[W_LP], amount_credited_to_LP_fund)
         self.assertEqual(self.yeti.balances[W_RAIN], amount_credited_to_rain_fund)
         self.assertEqual(self.yeti.balances[W_CHARITY], amount_credited_to_charity_fund)
@@ -300,6 +362,7 @@ class MyTestCase(unittest.TestCase):
         self.yeti.metadata['transfer_from_contract'] = 'con_yeti_transfer_from_2'
 
         balance_chief = self.yeti.balances[W_CHIEF]
+        
         self.yeti.approve(signer=W_CHIEF, amount=100, to='qt')
         self.yeti.transfer_from(signer='qt', amount=100, to='qt', main_account=W_CHIEF)
 
@@ -320,7 +383,7 @@ class MyTestCase(unittest.TestCase):
 
         # YETI market was created in setupToken()
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
         self.assertIsNone(self.yeti.balances[W_CHARITY])
@@ -333,7 +396,7 @@ class MyTestCase(unittest.TestCase):
         self.dex.add_liquidity(signer=W_CHIEF, contract='con_yeti_contract', currency_amount=100)
 
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
         self.assertIsNone(self.yeti.balances[W_CHARITY])
@@ -346,7 +409,7 @@ class MyTestCase(unittest.TestCase):
         self.dex.add_liquidity(signer='kels', contract='con_yeti_contract', currency_amount=100)
 
         self.assertIsNone(self.yeti.balances[W_MARKETN]) #in local testing default initial value is None
-        self.assertIsNone(self.yeti.balances['con_yeti_rewards'])
+        self.assertIsNone(self.yeti.balances['con_distr_rewards_yeti'])
         self.assertIsNone(self.yeti.balances[W_LP])
         self.assertIsNone(self.yeti.balances[W_RAIN])
         self.assertIsNone(self.yeti.balances[W_CHARITY])
@@ -359,14 +422,17 @@ class MyTestCase(unittest.TestCase):
         tax = 600_000*sell_tax
         amount_received_by_dex = 600_000 - tax
 
-        dex_balance_yeti = self.yeti.balances['con_rocketswap_official_v1_1']
+        balance_dex_yeti = self.yeti.balances['con_rocketswap_official_v1_1']
         self.dex.sell(signer='kels', contract='con_yeti_contract', token_amount=600_000)
 
         self.assertEqual(self.yeti.balances['kels'], 0)
-        self.assertEqual(self.yeti.balances['con_rocketswap_official_v1_1'], dex_balance_yeti+amount_received_by_dex)
+        self.assertEqual(self.yeti.balances['con_rocketswap_official_v1_1'], balance_dex_yeti+amount_received_by_dex)
 
     def test_21_user_selling_yeti_attracts_tax_2(self):
         self.yeti.metadata['transfer_from_contract'] = 'con_yeti_transfer_from_2'
+
+        balance_kels_yeti = self.yeti.balances['kels']
+        balance_dex_yeti = self.yeti.balances['con_rocketswap_official_v1_1']
 
         self.dex.sell(signer='kels', contract='con_yeti_contract', token_amount=1000)
         
@@ -384,9 +450,13 @@ class MyTestCase(unittest.TestCase):
         amount_credited_to_rain_fund
 
         calculated_sell_tax = total_credited_to_yeti_fund / 1000
+
+        balance_kels_yeti_current = balance_kels_yeti - 1000 
         
+        self.assertEqual(self.yeti.balances['kels'], balance_kels_yeti_current)
+        self.assertEqual(self.yeti.balances['con_rocketswap_official_v1_1'], balance_dex_yeti+1000-tax_amount)
         self.assertEqual(self.yeti.balances[W_MARKETN], amount_credited_to_marketing_fund)
-        self.assertEqual(self.yeti.balances['con_yeti_rewards'], amount_credited_to_rewards_fund)
+        self.assertEqual(self.yeti.balances['con_distr_rewards_yeti'], amount_credited_to_rewards_fund)
         self.assertEqual(self.yeti.balances[W_LP], amount_credited_to_LP_fund)
         self.assertEqual(self.yeti.balances[W_RAIN], amount_credited_to_rain_fund)
         self.assertEqual(self.yeti.balances[W_CHARITY], amount_credited_to_charity_fund)
@@ -397,8 +467,11 @@ class MyTestCase(unittest.TestCase):
     def test_22_owner_selling_yeti_attracts_2(self):
         self.yeti.metadata['transfer_from_contract'] = 'con_yeti_transfer_from_2'
 
+        balance_chief_yeti = self.yeti.balances[W_CHIEF]
+        balance_dex_yeti = self.yeti.balances['con_rocketswap_official_v1_1']
+
         self.dex.sell(signer=W_CHIEF, contract='con_yeti_contract', 
-            token_amount=1000, minimum_received=0, token_fees=False)
+            token_amount=1000)
 
         tax_amount = 1000 * sell_tax
         amount_credited_to_marketing_fund = tax_amount * marketing_perc
@@ -414,9 +487,13 @@ class MyTestCase(unittest.TestCase):
         amount_credited_to_rain_fund
 
         calculated_sell_tax = total_credited_to_yeti_fund / 1000
+
+        balance_chief_yeti_current = balance_chief_yeti - 1000 
         
+        self.assertEqual(self.yeti.balances[W_CHIEF], balance_chief_yeti_current)
+        self.assertEqual(self.yeti.balances['con_rocketswap_official_v1_1'], balance_dex_yeti+1000-tax_amount)
         self.assertEqual(self.yeti.balances[W_MARKETN], amount_credited_to_marketing_fund)
-        self.assertEqual(self.yeti.balances['con_yeti_rewards'], amount_credited_to_rewards_fund)
+        self.assertEqual(self.yeti.balances['con_distr_rewards_yeti'], amount_credited_to_rewards_fund)
         self.assertEqual(self.yeti.balances[W_LP], amount_credited_to_LP_fund)
         self.assertEqual(self.yeti.balances[W_RAIN], amount_credited_to_rain_fund)
         self.assertEqual(self.yeti.balances[W_CHARITY], amount_credited_to_charity_fund)
@@ -425,8 +502,6 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(sell_tax, calculated_sell_tax)
 
     def test_23_swapping_marmite_should_pass(self):
-        W_CHIEF = 'ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
-        
         env_0 = {'now': Datetime(year=2022, month=12, day=16)}
 
         swap_rate = ContractingDecimal('1')
@@ -483,7 +558,6 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual('reward_token = con_weth_lst001', agreement_state_2)
 
         # second act of governance
-
         reward_token_before_2nd_governance = reward_token_after_governance
 
         agreement_state_3 = self.yeti.change_metadata(signer=W_NIEL, key='reward_token', value='con_lusd_lst001')   
