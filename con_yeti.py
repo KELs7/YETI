@@ -66,8 +66,7 @@ def init():
     metadata['sell_function'] = 'sell'
     metadata['buy_function'] = 'buy'
 
-
-# LST002 with governance
+# governance
 
 @export
 def change_metadata(key: str, value: Any):
@@ -94,9 +93,6 @@ def change_metadata(key: str, value: Any):
         return f'{key} = {value}'
 
     return agreed
-
-
-# LST001 with extra features
 
 @export
 def mint(amount: float, to: str):
@@ -176,8 +172,6 @@ def transfer_from(amount: float, to: str, main_account: str):
             balances[metadata['charity_wallet']] += tax_amount * metadata['charity%']
             balances[metadata['buyback_wallet']] += tax_amount * metadata['buyback%']
             balances[metadata['burn_wallet']] += tax_amount * metadata['burn%'] 
-            # pay_tax(tax_amount, caller, main_account)
-
     else:
         assert balances[main_account, caller] >= amount, f'Not enough coins approved to send! You have {balances[main_account, caller]} \
             and are trying to spend {amount}'
@@ -186,26 +180,7 @@ def transfer_from(amount: float, to: str, main_account: str):
         balances[main_account, caller] -= amount
 
         balances[main_account] -= amount
-        balances[to] += amount
-
-# def pay_tax(tax_amount, caller, main_account):
-#     balances[main_account, caller] -= tax_amount
-#     balances[main_account] -= tax_amount
-#     # Transfers to YETI fund wallets
-#     balances[metadata['marketing_wallet']] += tax_amount * metadata['marketing%']
-#     balances[metadata['LP_wallet']] += tax_amount * metadata['LP%']
-#     balances[metadata['rewards_contract']] += tax_amount * metadata['rewards%']
-#     balances[metadata['rain_wallet']] += tax_amount * metadata['rain%']
-#     balances[metadata['charity_wallet']] += tax_amount * metadata['charity%']
-#     balances[metadata['buyback_wallet']] += tax_amount * metadata['buyback%']
-#     balances[metadata['burn_wallet']] += tax_amount * metadata['burn%']    
-    
-@export 
-def distribute_rewards(addresses: list, holder_min: float, cost_of_distr: float, eligible_total_balance: float):
-    assert_owner()
-    rewards_contract = I.import_module(metadata['rewards_contract'])
-    rewards_contract.distribute_rewards(contract=metadata['reward_token'],addresses=addresses, 
-        holder_min=holder_min, cost_of_distr=cost_of_distr, eligible_total_balance=eligible_total_balance)
+        balances[to] += amount    
 
 @export 
 def swap_token(amount: float):
@@ -234,6 +209,19 @@ def execute_proposal_after_a_month(key: str):
         'Proposal must be 1 month old!'
     metadata[key] = metadata[caller, key]['v']
     return True
+
+@export
+def sell_yeti_for_rewards(cost_of_distr: float):
+    assert_owner()
+    rewards_contract = I.import_module(metadata['rewards_contract'])
+    rewards_contract.sell_yeti_for_rewards(cost_of_distr=cost_of_distr,reward_token=metadata['reward_token'])
+
+@export 
+def distribute_rewards(addresses: list, holder_min: float, cost_of_distr: float, eligible_total_balance: float):
+    assert_owner()
+    rewards_contract = I.import_module(metadata['rewards_contract'])
+    rewards_contract.distribute_rewards(contract=metadata['reward_token'],addresses=addresses, 
+        holder_min=holder_min, cost_of_distr=cost_of_distr, eligible_total_balance=eligible_total_balance)
 
 def assert_owner():
     assert ctx.caller in metadata['owners'], 'Only owner can call this method!'
