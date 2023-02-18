@@ -93,7 +93,7 @@ class MyTestCase(unittest.TestCase):
             self.yeti_rewards.sell_yeti_for_rewards(cost_of_distr=1000)
             
         with self.assertRaises(AssertionError):
-            self.yeti_rewards.distribute_rewards(signer=W_CHIEF, contract='con_lusd_lst001', addresses=address_list, 
+            self.yeti_rewards.distribute_rewards(signer=W_CHIEF, reward_token='con_lusd_lst001', addresses=address_list, 
                 holder_min=50_000_000, cost_of_distr=1400, eligible_total_balance=250_000)
 
     def test_02_when_distr_cost_exceeds_tau_purchased_distr_fails(self):
