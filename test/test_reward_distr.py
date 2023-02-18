@@ -90,6 +90,9 @@ class MyTestCase(unittest.TestCase):
         address_list = ['chief', 'niel','dev']
 
         with self.assertRaises(AssertionError):
+            self.yeti_rewards.sell_yeti_for_rewards(cost_of_distr=1000)
+            
+        with self.assertRaises(AssertionError):
             self.yeti_rewards.distribute_rewards(signer=W_CHIEF, contract='con_lusd_lst001', addresses=address_list, 
                 holder_min=50_000_000, cost_of_distr=1400, eligible_total_balance=250_000)
 
@@ -100,6 +103,7 @@ class MyTestCase(unittest.TestCase):
         address_list = ['chief', 'niel','dev']
         
         with self.assertRaises(AssertionError):
+            self.yeti.sell_yeti_for_rewards(signer=W_CHIEF, cost_of_distr=cost_of_distr)
             self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
                 cost_of_distr=cost_of_distr, eligible_total_balance=250_000)
             print(self.currency.balances['con_distr_rewards_yeti'])
@@ -114,6 +118,8 @@ class MyTestCase(unittest.TestCase):
         
         address_list = ['chief', 'niel','dev']
         
+        self.yeti.sell_yeti_for_rewards(signer=W_CHIEF, cost_of_distr=cost_of_distr)
+
         self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
             holder_min=200, cost_of_distr=cost_of_distr, eligible_total_balance=1400)
 
@@ -137,7 +143,9 @@ class MyTestCase(unittest.TestCase):
         self.yeti.transfer(signer=W_CHIEF, amount=800, to='dev') 
         
         address_list = ['chief', 'niel','dev']
-        
+
+        self.yeti.sell_yeti_for_rewards(signer=W_CHIEF, cost_of_distr=cost_of_distr)
+
         self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
             holder_min=200, cost_of_distr=cost_of_distr, eligible_total_balance=1400)
 
@@ -160,7 +168,9 @@ class MyTestCase(unittest.TestCase):
         self.yeti.transfer(signer=W_CHIEF, amount=800, to='dev') 
         
         address_list = ['chief', 'niel','dev']
-        
+
+        self.yeti.sell_yeti_for_rewards(signer=W_CHIEF, cost_of_distr=cost_of_distr)
+
         self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
             holder_min=300, cost_of_distr=cost_of_distr, eligible_total_balance=1400)
 
@@ -186,6 +196,8 @@ class MyTestCase(unittest.TestCase):
         
         address_list = ['con_am_contract', 'niel','dev']
         
+        self.yeti.sell_yeti_for_rewards(signer=W_CHIEF, cost_of_distr=cost_of_distr)
+
         self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
             holder_min=300, cost_of_distr=cost_of_distr, eligible_total_balance=1400)
 
@@ -213,6 +225,8 @@ class MyTestCase(unittest.TestCase):
         
         address_list = ['chief', 'niel','dev']
         
+        self.yeti.sell_yeti_for_rewards(signer=W_CHIEF, cost_of_distr=cost_of_distr)
+
         self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
             holder_min=200, cost_of_distr=cost_of_distr, eligible_total_balance=1400)
 
@@ -239,6 +253,8 @@ class MyTestCase(unittest.TestCase):
         
         address_list = ['chief', 'niel','dev']
         
+        self.yeti.sell_yeti_for_rewards(signer=W_CHIEF, cost_of_distr=cost_of_distr)
+
         self.yeti.distribute_rewards(signer=W_CHIEF, addresses=address_list, 
             holder_min=200, cost_of_distr=cost_of_distr, eligible_total_balance=1400)
 
