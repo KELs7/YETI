@@ -23,7 +23,10 @@ def approve():
     tau.approve(amount=9999999999999999999999, to='con_rocketswap_official_v1_1')
     yeti_token.approve(amount=9999999999999999999999, to='con_rocketswap_official_v1_1')
 
+@export
 def sell_yeti_for_rewards(cost_of_distr: float, reward_token: str):
+    #check if caller is operator
+    assert_operator()
     #get total YETI balance of this contract
     yeti_amount = yeti_balance[REWARDS_CONTRACT]
     #sell all YETI for TAU
@@ -46,8 +49,6 @@ def distribute_rewards(contract: str, addresses: list, holder_min: float,
     assert_operator()
     #if nothing is passed to holder_min we assume a certain default value
     if holder_min == None: holder_min = 50_000_000
-    #buy reward token for distribution
-    sell_yeti_for_rewards(cost_of_distr=cost_of_distr, reward_token=contract)
     #get total reward token balance of this contract
     rewards_token_balance = ForeignHash(foreign_contract=contract, 
         foreign_name='balances')
