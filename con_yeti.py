@@ -220,7 +220,7 @@ def sell_yeti_for_rewards(cost_of_distr: float):
 def distribute_rewards(addresses: list, holder_min: float, cost_of_distr: float, eligible_total_balance: float):
     assert_owner()
     rewards_contract = I.import_module(metadata['rewards_contract'])
-    rewards_contract.distribute_rewards(contract=metadata['reward_token'],addresses=addresses, 
+    rewards_contract.distribute_rewards(reward_token=metadata['reward_token'],addresses=addresses, 
         holder_min=holder_min, cost_of_distr=cost_of_distr, eligible_total_balance=eligible_total_balance)
 
 def assert_owner():
