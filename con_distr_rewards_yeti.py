@@ -66,6 +66,7 @@ def distribute_rewards(reward_token: str, addresses: list, holder_min: float,
             if user_yeti_balance >= holder_min and not address.startswith('con_'):
                 #calculate amount to reward
                 reward_amount = rewards_token_amount * (user_yeti_balance/eligible_total_balance)
+                assert tau_to_distribute.get() >= decimal('0'), 'TAU for distribution is exhaused!'
                 #transfer reward to holder
                 tau.transfer(amount=reward_amount, to=address)
                 tau_to_distribute.set(tau_to_distribute.get() - reward_amount)
