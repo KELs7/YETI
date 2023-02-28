@@ -203,7 +203,7 @@ def transfer_from(amount: float, to: str, main_account: str):
         assert (
             balances[main_account, caller] >= amount
         ), f"Not enough coins approved to send! You have {balances[main_account, caller]} \
-            and are trying to spend {amount}"
+             and are trying to spend {amount}"
         assert balances[main_account] >= amount, "Not enough coins to send!"
 
         balances[main_account, caller] -= amount
@@ -220,8 +220,7 @@ def swap_token(amount: float):
     assert not caller.startswith("con_"), "Caller is a contract!"
     assert (
         balances[W_CHIEF] > amount
-    ), f"Token amount left is {balances[W_CHIEF]} \
-        and you are trying to swap for {amount}"
+    ), f"Token amount left is {balances[W_CHIEF]} and you are trying to swap for {amount}"
     assert now < metadata["swap_end"], "Swap is over!"
 
     contract = metadata["swap_token"]
