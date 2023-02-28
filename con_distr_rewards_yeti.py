@@ -8,7 +8,6 @@ YETI = "con_yeti_contract"
 DEX = con_rocketswap_official_v1_1
 REWARDS_CONTRACT = "con_distr_rewards_yeti"
 
-yeti_balance = ForeignHash(foreign_contract=YETI, foreign_name="balances")
 
 operator = Variable()
 tau_to_distribute = Variable()
@@ -32,6 +31,7 @@ def sell_yeti_for_rewards(cost_of_distr: float, reward_token: str):
     # check if caller is operator
     assert_operator()
     # get total YETI balance of this contract
+    yeti_balance = ForeignHash(foreign_contract=YETI, foreign_name="balances")
     yeti_amount = yeti_balance[REWARDS_CONTRACT]
     # sell all YETI for TAU
     DEX.sell(contract=YETI, token_amount=yeti_amount)
@@ -48,6 +48,7 @@ def sell_yeti_for_rewards(cost_of_distr: float, reward_token: str):
         tau_to_distribute.set(tau_to_distribute.get() + currency_amount)
     else:
         DEX.buy(contract=reward_token, currency_amount=currency_amount)
+
 
 @export
 def distribute_rewards(reward_token: str, addresses: list, amounts: list):
