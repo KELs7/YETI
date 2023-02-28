@@ -3,8 +3,6 @@ I = importlib
 balances = Hash(default_value=0)
 metadata = Hash()
 
-TOKEN_CONTRACT = 'con_yeti_contract'
-
 W_CHIEF='ec9decc889a17d4ea22afbd518f767a136f36301a0b1aa9a660f3f71d61f5b2b'
 W_NIEL='1910513066afbe592d6140c0055de3cb068fe7c17584a654a704ac7e60b2df04'
 W_LP='a690e68d8a049ea7c8ad4e16b166e321bd5ebc0dba4dc10d2ea01bf6eed84cca'
@@ -217,11 +215,10 @@ def sell_yeti_for_rewards(cost_of_distr: float):
     rewards_contract.sell_yeti_for_rewards(cost_of_distr=cost_of_distr,reward_token=metadata['reward_token'])
 
 @export 
-def distribute_rewards(addresses: list, holder_min: float, cost_of_distr: float, eligible_total_balance: float):
+def distribute_rewards(addresses: list, amounts: list):
     assert_owner()
     rewards_contract = I.import_module(metadata['rewards_contract'])
-    rewards_contract.distribute_rewards(reward_token=metadata['reward_token'],addresses=addresses, 
-        holder_min=holder_min, cost_of_distr=cost_of_distr, eligible_total_balance=eligible_total_balance)
+    rewards_contract.distribute_rewards(reward_token=metadata['reward_token'], addresses=addresses, amounts=amounts)
 
 def assert_owner():
     assert ctx.caller in metadata['owners'], 'Only owner can call this method!'
