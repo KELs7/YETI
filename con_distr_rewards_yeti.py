@@ -42,6 +42,7 @@ def sell_yeti_for_rewards(cost_of_distr: float, reward_token: str):
     assert currency_amount > cost_of_distr, "Not enough to cover distribution fees"
     # amount worth distributing
     currency_amount -= cost_of_distr
+    # pay owner wallet to cover distribution fees
     tau.transfer(amount=cost_of_distr, to=ctx.signer)
 
     if reward_token == "currency":
@@ -58,9 +59,9 @@ def distribute_rewards(reward_token: str, addresses: list, amounts: list):
         for num in range(len(addresses)):
             address = addresses[num]
             amount = amounts[num]
+            # contracts do not get rewards
             if not address.startswith("con_"):
-                assert tau_to_distribute.get() >= decimal(
-                    "0"
+                assert tau_to_distribute.get() >= decimal("0"
                 ), "TAU for distribution is exhausted!"
                 tau.transfer(amount=amount, to=address)
                 tau_to_distribute.set(tau_to_distribute.get() - amount)
@@ -69,6 +70,7 @@ def distribute_rewards(reward_token: str, addresses: list, amounts: list):
             address = addresses[num]
             amount = amounts[num]
             token = I.import_module(reward_token)
+            # contracts do not get rewards
             if not address.startswith("con_"):
                 token.transfer(amount=amount, to=address)
 
