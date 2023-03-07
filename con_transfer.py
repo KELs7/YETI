@@ -9,8 +9,8 @@ def init():
     operator.set(YETI)
 
 @export
-def transfer(ctx_signer: str, contract: str, contract_method: str, amount: float, 
-    owners: list, tax_amount: float):
+def transfer(ctx_signer: str, contract: str, contract_method: str, amount: 
+    float, owners: list, tax_amount: float):
     assert_operator()
 
     if contract == 'con_rocketswap_official_v1_1':
