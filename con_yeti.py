@@ -15,7 +15,7 @@ W_BUYBACK = "b22e0df3949428211989867c4e4febd851af3c1c044a8d892e8a07b7034e94dc"
 @construct
 def init():
     # Token info
-    balances[W_CHIEF] = 95_000_000_000
+    balances[W_CHIEF] = 105_000_000_000
     balances[W_NIEL] = 5_000_000_000
     metadata["token_name"] = "YETI TOKEN"
     metadata["token_symbol"] = "YETI"
@@ -46,15 +46,17 @@ def init():
     ]
 
     # Rates
-    metadata["buy_tax"] = decimal("0.02")  # 2%
-    metadata["sell_tax"] = decimal("0.05")  # 5%
-    metadata["rewards%"] = decimal("0.1")  # 10% of tax
-    metadata["LP%"] = decimal("0.35")  # 35% of tax
-    metadata["rain%"] = decimal("0.05")  # 5% of tax
-    metadata["marketing%"] = decimal("0.5")  # 50% of tax
-    metadata["charity%"] = decimal("0.00")  # 0% of tax
-    metadata["buyback%"] = decimal("0.00")  # 0% of tax
-    metadata["burn%"] = decimal("0.00")  # 0% of tax
+    metadata["buy_tax"] = decimal("0.09")  # 9%
+    metadata["sell_tax"] = decimal("0.09")  # 9%
+    metadata["distr_rates"] = {
+        "marketing%": decimal("0"),
+        "LP%": decimal("0.222"),
+        "rewards%": decimal("0.667"),
+        "rain%": decimal("0.111"),
+        "charity%": decimal("0"),
+        "buyback%": decimal("0"),
+        "burn%": decimal("0")   
+    }
     # DEX
     metadata["dex"] = ["con_rocketswap_official_v1_1"]
     # Reward token
@@ -76,6 +78,9 @@ def change_metadata(key: str, value: Any):
     assert_owner()
     owners = metadata["owners"]
     caller = ctx.caller
+
+    if key == "distr_rates":
+        validate_distr_rates(value=value)
 
     metadata[caller, key] = {"v": value, "time": now}
     agreed = False
@@ -130,13 +135,13 @@ def transfer(amount: float, to: str):
             ] and contract_method == metadata["buy_function"]:
             # Transfers to YETI fund wallets
             balances[metadata["marketing_wallet"]
-                ] += tax_amount * metadata["marketing%"]
-            balances[metadata["LP_wallet"]] += tax_amount * metadata["LP%"]
-            balances[metadata["rewards_contract"]] += tax_amount * metadata["rewards%"]
-            balances[metadata["rain_wallet"]] += tax_amount * metadata["rain%"]
-            balances[metadata["charity_wallet"]] += tax_amount * metadata["charity%"]
-            balances[metadata["buyback_wallet"]] += tax_amount * metadata["buyback%"]
-            balances[metadata["burn_wallet"]] += tax_amount * metadata["burn%"]
+                ] += tax_amount * metadata["distr_rates"]["marketing%"]
+            balances[metadata["LP_wallet"]] += tax_amount * metadata["distr_rates"]["LP%"]
+            balances[metadata["rewards_contract"]] += tax_amount * metadata["distr_rates"]["rewards%"]
+            balances[metadata["rain_wallet"]] += tax_amount * metadata["distr_rates"]["rain%"]
+            balances[metadata["charity_wallet"]] += tax_amount * metadata["distr_rates"]["charity%"]
+            balances[metadata["buyback_wallet"]] += tax_amount * metadata["distr_rates"]["buyback%"]
+            balances[metadata["burn_wallet"]] += tax_amount * metadata["distr_rates"]["burn%"]
     else:
         balances[caller] -= amount
         balances[to] += amount
@@ -177,13 +182,13 @@ def transfer_from(amount: float, to: str, main_account: str):
                 balances[main_account] -= tax_amount
             # Transfers to YETI fund wallets
             balances[metadata["marketing_wallet"]
-                ] += tax_amount * metadata["marketing%"]
-            balances[metadata["LP_wallet"]] += tax_amount * metadata["LP%"]
-            balances[metadata["rewards_contract"]] += tax_amount * metadata["rewards%"]
-            balances[metadata["rain_wallet"]] += tax_amount * metadata["rain%"]
-            balances[metadata["charity_wallet"]] += tax_amount * metadata["charity%"]
-            balances[metadata["buyback_wallet"]] += tax_amount * metadata["buyback%"]
-            balances[metadata["burn_wallet"]] += tax_amount * metadata["burn%"]
+                ] += tax_amount * metadata["distr_rates"]["marketing%"]
+            balances[metadata["LP_wallet"]] += tax_amount * metadata["distr_rates"]["LP%"]
+            balances[metadata["rewards_contract"]] += tax_amount * metadata["distr_rates"]["rewards%"]
+            balances[metadata["rain_wallet"]] += tax_amount * metadata["distr_rates"]["rain%"]
+            balances[metadata["charity_wallet"]] += tax_amount * metadata["distr_rates"]["charity%"]
+            balances[metadata["buyback_wallet"]] += tax_amount * metadata["distr_rates"]["buyback%"]
+            balances[metadata["burn_wallet"]] += tax_amount * metadata["distr_rates"]["burn%"]
     else:
         assert balances[main_account, caller
             ] >= amount, f"Not enough coins approved to send! You have {balances[main_account, caller]} and are trying to spend {amount}"
@@ -241,6 +246,17 @@ def distribute_rewards(addresses: list, amounts: list):
     rewards_contract.distribute_rewards(reward_token=metadata[
         "reward_token"], addresses=addresses, amounts=amounts)
 
+
+def validate_distr_rates(value: Any):
+    r = {"marketing%", "LP%", "rewards%", "rain%", "charity%", "buyback%", "burn%"}
+    s , t = set(), 0
+    for rk in list(value.keys()):
+        s.add(rk)
+    assert s == r, "Key missing or mispelled!"
+    for k, v in value.items():
+        assert isinstance(v, decimal), "Value is not a ContractingDecimal!"
+        t += v
+    assert t == 1, "Ratios do not sum to 1!"
 
 def assert_owner():
     assert ctx.caller in metadata["owners"
