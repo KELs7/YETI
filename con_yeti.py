@@ -17,7 +17,7 @@ def init():
     # Token info
     balances[W_CHIEF] = 105_000_000_000
     balances[W_NIEL] = 5_000_000_000
-    metadata["token_name"] = "YETI TOKEN"
+    metadata["token_name"] = "YETI"
     metadata["token_symbol"] = "YETI"
     metadata["owners"] = [W_CHIEF, W_NIEL]
     # Swap info
@@ -60,7 +60,7 @@ def init():
     # DEX
     metadata["dex"] = ["con_rocketswap_official_v1_1"]
     # Reward token
-    metadata["reward_token"] = "con_lusd_lst001"
+    metadata["reward_token"] = "currency"
 
     metadata["bridge"] = ["con_lamden_link_bsc_v1", "con_lamden_link_weth_v1"]
 
