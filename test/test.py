@@ -12,15 +12,15 @@ W_MARKETN = '3466e7576d1b70aef675ee4149b0d83cf21f69f4cfade801249d5afaad7c7ac9'
 W_BUYBACK = 'b22e0df3949428211989867c4e4febd851af3c1c044a8d892e8a07b7034e94dc'
 W_CHARITY = '4c66b7ba687222d44df2c3c989ae4cc50185abfcee8ea5356afcc5344c4a5f94'
 
-buy_tax = ContractingDecimal('0.02') #2%
-sell_tax = ContractingDecimal('0.05') #5%
-marketing_perc = ContractingDecimal('0.5') #50% of tax
-rewards_perc = ContractingDecimal('0.1') #10% of tax
-LP_perc = ContractingDecimal('0.35') #35% of tax
-rain_perc = ContractingDecimal('0.05') #5% of tax
-charity_perc = ContractingDecimal('0.00') #0% of tax
-buyback_perc = ContractingDecimal('0.00') #0% of tax
-burn_perc = ContractingDecimal('0.00') #0% of tax
+buy_tax = ContractingDecimal('0.09') #9%
+sell_tax = ContractingDecimal('0.09') #9%
+marketing_perc = ContractingDecimal('0') #50% of tax
+rewards_perc = ContractingDecimal('0.667') #10% of tax
+LP_perc = ContractingDecimal('0.222') #35% of tax
+rain_perc = ContractingDecimal('0.111') #5% of tax
+charity_perc = ContractingDecimal('0') #0% of tax
+buyback_perc = ContractingDecimal('0') #0% of tax
+burn_perc = ContractingDecimal('0') #0% of tax
 
 class MyTestCase(unittest.TestCase):
     def setUp(self):
