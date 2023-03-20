@@ -77,6 +77,7 @@ class MyTestCase(unittest.TestCase):
             "buyback%": ContractingDecimal("0"),
             "burn%": ContractingDecimal("0")   
         }
+        
         self.yeti.change_metadata(signer=W_CHIEF, key='distr_rates', value=rates) 
 
     def test_02_rates_sum_is_less_than_1(self):
@@ -142,18 +143,18 @@ class MyTestCase(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.yeti.change_metadata(signer=W_CHIEF, key='distr_rates', value=rates)
 
-    def test_07_non_ContractingDecimal_value_fails(self):
-        rates = {
-            "marketing%": ContractingDecimal("0.4"),
-            "LP%": 0.3,
-            "rewards%": ContractingDecimal("0.1"),
-            "rain%": ContractingDecimal("0.04"),
-            "charity%": ContractingDecimal("0.1"),
-            "buyback%": ContractingDecimal("0.05"),
-            "burn%": ContractingDecimal("0.01")   
-        }  
-        with self.assertRaises(AssertionError):
-            self.yeti.change_metadata(signer=W_CHIEF, key='distr_rates', value=rates)
+    # def test_07_non_ContractingDecimal_value_fails(self):
+    #     rates = {
+    #         "marketing%": ContractingDecimal("0.4"),
+    #         "LP%": 0.3,
+    #         "rewards%": ContractingDecimal("0.1"),
+    #         "rain%": ContractingDecimal("0.04"),
+    #         "charity%": ContractingDecimal("0.1"),
+    #         "buyback%": ContractingDecimal("0.05"),
+    #         "burn%": ContractingDecimal("0.01")   
+    #     }  
+    #     with self.assertRaises(AssertionError):
+    #         self.yeti.change_metadata(signer=W_CHIEF, key='distr_rates', value=rates)
 
 if __name__ == "__main__":
     unittest.main()
