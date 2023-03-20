@@ -18,7 +18,7 @@ def init():
     balances[W_CHIEF] = 105_000_000_000
     balances[W_NIEL] = 5_000_000_000
     metadata["token_name"] = "YETI"
-    metadata["token_symbol"] = "YETI"
+    metadata["token_symbol"] = "$YETI"
     metadata["owners"] = [W_CHIEF, W_NIEL]
     # Swap info
     metadata["swap_token"] = "con_marmite100_contract"
@@ -254,7 +254,6 @@ def validate_distr_rates(value: Any):
         s.add(rk)
     assert s == r, "Key missing or mispelled!"
     for k, v in value.items():
-        assert isinstance(v, decimal), "Value is not a ContractingDecimal!"
         t += v
     assert t == 1, "Ratios do not sum to 1!"
 
