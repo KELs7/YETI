@@ -46,7 +46,8 @@ def sell_yeti_for_rewards(cost_of_distr: float, reward_token: str):
     tau.transfer(amount=cost_of_distr, to=ctx.signer)
 
     if reward_token == "currency":
-        tau_to_distribute.set(tau_to_distribute.get() + currency_amount)
+        # tau_to_distribute.set(tau_to_distribute.get() + currency_amount)
+        tau_to_distribute.set(currency_amount)
     else:
         DEX.buy(contract=reward_token, currency_amount=currency_amount)
 
