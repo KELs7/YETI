@@ -144,6 +144,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_03_distributing_reward_token_other_than_tau_works(self):
         cost_of_distr = 90
+        self.yeti.metadata["reward_token"] = "con_lusd_lst001"
         # yeti transfers
         self.yeti.transfer(signer=W_CHIEF, amount=10, to="con_distr_rewards_yeti")
         self.yeti.transfer(signer=W_CHIEF, amount=200, to="chief")
@@ -241,6 +242,7 @@ class MyTestCase(unittest.TestCase):
 
     def test_06_signer_is_payed_distr_cost_when_distr_other_tokens(self):
         cost_of_distr = 90
+        self.yeti.metadata["reward_token"] = "con_lusd_lst001"
         # yeti transfers
         self.yeti.transfer(signer=W_CHIEF, amount=10, to="con_distr_rewards_yeti")
         self.yeti.transfer(signer=W_CHIEF, amount=200, to="chief")
@@ -257,9 +259,8 @@ class MyTestCase(unittest.TestCase):
         ]
 
         balance_chief_tau = self.currency.balances[W_CHIEF]
-
         self.yeti.sell_yeti_for_rewards(signer=W_CHIEF, cost_of_distr=cost_of_distr)
-
+        
         self.yeti.distribute_rewards(
             signer=W_CHIEF, addresses=address_list, amounts=amount_list
         )
@@ -309,7 +310,7 @@ class MyTestCase(unittest.TestCase):
     # # USING DEDUCTING TAX FROM AMOUNT SOLD
     def test_08_distributing_reward_token_other_than_tau_works_2(self):
         self.yeti.metadata["transfer_from_contract"] = "con_yeti_transfer_from_2"
-
+        self.yeti.metadata["reward_token"] = "con_lusd_lst001"
         cost_of_distr = 90
         # yeti transfers
         self.yeti.transfer(signer=W_CHIEF, amount=10, to="con_distr_rewards_yeti")
